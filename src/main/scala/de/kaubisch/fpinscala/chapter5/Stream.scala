@@ -3,10 +3,10 @@ package de.kaubisch.fpinscala.chapter5
 import scala.annotation.tailrec
 
 sealed trait Stream[+A] {
-  def headOption : Option[A] = this match {
-    case Empty => None
-    case Cons(h, t) => Some(h())
-  }
+  def forAll(p: A => Boolean) : Boolean = foldRight(true)((a,b) => p(a) && b)
+
+  def headOption : Option[A] =
+    foldRight[Option[A]](None)((a,b) => Some(a))
 
   def toList: List[A] = {
     @tailrec
@@ -29,9 +29,14 @@ sealed trait Stream[+A] {
     case Cons(h, t) => t().drop(elements - 1)
   }
 
-  def takeWhile(p: A => Boolean) : Stream[A] = this match {
-    case Cons(h, t) if p(h()) => Cons(h, () => t().takeWhile(p))
-    case _ => Empty
+  def takeWhile(p: A => Boolean) : Stream[A] =
+    foldRight[Stream[A]](Stream.empty)((a,b) => if(p(a)) Cons(() => a, () => b) else Empty )
+
+  def exists(p : A => Boolean) : Boolean = foldRight(false)((a,b) => p(a) || b)
+
+  def foldRight[B](z: => B)(f: (A, => B) => B) : B = this match {
+    case Cons(h, t) => f(h(), t().foldRight(z)(f))
+    case _ => z
   }
 }
 case object Empty extends Stream[Nothing]
