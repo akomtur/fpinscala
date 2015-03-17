@@ -18,7 +18,7 @@ sealed trait Stream[+A] {
   }
 
   def take(elements: Int) : Stream[A] = this match {
-    case Cons(h, t) if elements > 0 => Cons(h,() => t().take(elements-1))
+    case Cons(h, t) if elements > 0 => Stream.cons(h(), t().take(elements-1))
     case _ => Empty
   }
 
@@ -29,8 +29,8 @@ sealed trait Stream[+A] {
     case Cons(h, t) => t().drop(elements - 1)
   }
 
-  def takeWhile(p: A => Boolean) : Stream[A] =
-    foldRight[Stream[A]](Stream.empty)((a,b) => if(p(a)) Cons(() => a, () => b) else Empty )
+  def takeWhile(f: A => Boolean) : Stream[A] =
+    foldRight(Stream.empty[A])((a,b) => if(f(a)) Stream.cons(a, b) else Stream.empty)
 
   def exists(p : A => Boolean) : Boolean = foldRight(false)((a,b) => p(a) || b)
 
