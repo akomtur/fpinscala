@@ -131,4 +131,8 @@ class StreamSpec extends FlatSpec with Matchers {
   "Stream.from" should "return a Stream with ascending numbers" in {
     Stream.from(1).take(5).toList shouldBe List(1,2,3,4,5)
   }
+
+  "Stream.fibs" should "return a fibonacci stream" in {
+    Stream.fibs.take(5).toList shouldBe List(1,1,2,3,5)
+  }
 }

@@ -52,6 +52,14 @@ case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
 
 object Stream {
+  def fibs : Stream[Int] = {
+
+    def stream(n1: Int, n2: Int) : Stream[Int] = {
+      Stream.cons(n2, stream(n2,n1+n2))
+    }
+    stream(0,1)
+  }
+
   def from(start : Int) : Stream[Int] = Stream.cons(start, from(start+1))
 
   def cons[A](hd: => A, tl: => Stream[A]): Stream[A] = {
