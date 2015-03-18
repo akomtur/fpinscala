@@ -3,8 +3,7 @@ package de.kaubisch.fpinscala.chapter5
 import scala.annotation.tailrec
 
 sealed trait Stream[+A] {
-  def filter(f: A => Boolean) : Stream[A] =
-    foldRight(Stream.empty[A])((a,b) => if (f(a)) Stream.cons(a, b) else b)
+  def append[B >: A](el : => B) : Stream[B] = foldRight(Stream.cons(el, Stream.empty))((a,b) => Stream.cons(a,b))
 
   def forAll(p: A => Boolean) : Boolean = foldRight(true)((a,b) => p(a) && b)
 
@@ -42,6 +41,8 @@ sealed trait Stream[+A] {
   }
 
   def map[B](f: A => B) : Stream[B] = foldRight(Stream.empty[B])((a,b) => Stream.cons(f(a), b))
+
+  def filter(f: A => Boolean) : Stream[A] = foldRight(Stream.empty[A])((a,b) => if (f(a)) Stream.cons(a, b) else b)
 }
 
 case object Empty extends Stream[Nothing]

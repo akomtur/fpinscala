@@ -108,4 +108,12 @@ class StreamSpec extends FlatSpec with Matchers {
     Stream(1,2,3).filter(_ == 4) shouldBe Stream.empty
   }
 
+  "Stream.append" should "return a new Stream with an additional element when called" in {
+    Stream(1,2,3).append(4).toList shouldBe List(1,2,3,4)
+  }
+
+  it should "return a Stream with one element when called on am empty Stream" in {
+    Stream.empty.append(1).toList shouldBe List(1)
+  }
+
 }
