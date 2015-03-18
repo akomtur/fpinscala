@@ -52,6 +52,11 @@ case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
 
 object Stream {
+  def unfold[A,S](z: S)(f: S => Option[(A,S)]) : Stream[A] = f(z) match {
+    case Some((a,s)) => cons(a, Stream.unfold(s)(f))
+    case _ => empty
+  }
+
   def fibs : Stream[Int] = {
 
     def stream(n1: Int, n2: Int) : Stream[Int] = {

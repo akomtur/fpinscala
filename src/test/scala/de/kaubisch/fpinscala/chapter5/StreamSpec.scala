@@ -135,4 +135,12 @@ class StreamSpec extends FlatSpec with Matchers {
   "Stream.fibs" should "return a fibonacci stream" in {
     Stream.fibs.take(5).toList shouldBe List(1,1,2,3,5)
   }
+
+  "Stream.unfold" should "return a new Stream that uses the passed function to generate a Stream" in {
+    Stream.unfold(1)(a => Some(a, a+1)).take(5).toList shouldBe List(1,2,3,4,5)
+  }
+
+  it should "return an empty Stream when function return None" in {
+    Stream.unfold(0)(_ => None) shouldBe Stream.empty
+  }
 }
