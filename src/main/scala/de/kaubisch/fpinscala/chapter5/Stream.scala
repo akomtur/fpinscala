@@ -1,11 +1,10 @@
 package de.kaubisch.fpinscala.chapter5
 
+import javax.xml.stream.events.StartDocument
+
 import scala.annotation.tailrec
 
 sealed trait Stream[+A] {
-  def flatMap[B](f: A => Stream[B]) : Stream[B] =
-    foldRight(Stream.empty : Stream[B])((a,b) => f(a) append b)
-
   def forAll(p: A => Boolean) : Boolean = foldRight(true)((a,b) => p(a) && b)
 
   def headOption : Option[A] =
@@ -45,12 +44,16 @@ sealed trait Stream[+A] {
   def filter(f: A => Boolean) : Stream[A] = foldRight(Stream.empty[A])((a,b) => if (f(a)) Stream.cons(a, b) else b)
 
   def append[B >: A](el : => Stream[B]) : Stream[B] = foldRight(el)((a,b) => Stream.cons(a,b))
+
+  def flatMap[B](f: A => Stream[B]) : Stream[B] = foldRight(Stream.empty : Stream[B])((a,b) => f(a) append b)
 }
 
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
 
 object Stream {
+  def from(start : Int) : Stream[Int] = Stream.cons(start, from(start+1))
+
   def cons[A](hd: => A, tl: => Stream[A]): Stream[A] = {
     lazy val head = hd
     lazy val tail = tl
@@ -58,6 +61,11 @@ object Stream {
   }
 
   def empty[A]: Stream[A] = Empty
+
+  def constant[A](a : A) : Stream[A] = {
+    lazy val cons : Stream[A] = Stream.cons(a, cons)
+    cons
+  }
 
   def apply[A](as: A*) : Stream [A] = {
     if(as.isEmpty) empty

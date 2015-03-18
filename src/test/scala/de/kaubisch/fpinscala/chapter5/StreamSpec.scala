@@ -124,4 +124,11 @@ class StreamSpec extends FlatSpec with Matchers {
     Stream.empty[Int].flatMap(a => Stream.cons(a + 1, Stream.empty)) shouldBe Stream.empty
   }
 
+  "Stream.constant" should "return an infinite Stream of same value" in {
+    Stream.constant(1).take(5).toList shouldBe List(1,1,1,1,1)
+  }
+
+  "Stream.from" should "return a Stream with ascending numbers" in {
+    Stream.from(1).take(5).toList shouldBe List(1,2,3,4,5)
+  }
 }
