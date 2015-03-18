@@ -88,4 +88,12 @@ class StreamSpec extends FlatSpec with Matchers {
     Stream(1,2,3).forAll(_ < 3) shouldBe false
   }
 
+  "Stream.map" should "return a new mapped Stream when called on filled Stream" in {
+    Stream(1,2,3).map(_.toString).toList shouldBe List("1", "2", "3")
+  }
+
+  it should "return an empty Stream when called on empty Stream" in {
+    Stream.empty[Int].map(_.toString) shouldBe Stream.empty
+  }
+
 }

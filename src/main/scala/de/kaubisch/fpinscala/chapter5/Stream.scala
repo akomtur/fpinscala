@@ -6,7 +6,7 @@ sealed trait Stream[+A] {
   def forAll(p: A => Boolean) : Boolean = foldRight(true)((a,b) => p(a) && b)
 
   def headOption : Option[A] =
-    foldRight[Option[A]](None)((a,b) => Some(a))
+    foldRight(None : Option[A])((a,_) => Some(a))
 
   def toList: List[A] = {
     @tailrec
@@ -22,9 +22,8 @@ sealed trait Stream[+A] {
     case _ => Empty
   }
 
-
   def drop(elements: Int) :Stream[A] = this match {
-    case Empty => Empty
+    case Empty => Stream.empty
     case c @ Cons(_,_) if elements == 0 => c
     case Cons(h, t) => t().drop(elements - 1)
   }
@@ -38,7 +37,10 @@ sealed trait Stream[+A] {
     case Cons(h, t) => f(h(), t().foldRight(z)(f))
     case _ => z
   }
+
+  def map[B](f: A => B) : Stream[B] = foldRight(Stream.empty[B])((a,b) => Stream.cons(f(a), b))
 }
+
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
 
