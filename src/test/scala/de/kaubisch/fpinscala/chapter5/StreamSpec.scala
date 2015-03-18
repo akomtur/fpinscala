@@ -109,11 +109,19 @@ class StreamSpec extends FlatSpec with Matchers {
   }
 
   "Stream.append" should "return a new Stream with an additional element when called" in {
-    Stream(1,2,3).append(4).toList shouldBe List(1,2,3,4)
+    Stream(1,2,3).append(Stream(4)).toList shouldBe List(1,2,3,4)
   }
 
-  it should "return a Stream with one element when called on am empty Stream" in {
-    Stream.empty.append(1).toList shouldBe List(1)
+  it should "return a Stream with one element when called on an empty Stream" in {
+    Stream.empty.append(Stream(1)).toList shouldBe List(1)
+  }
+
+  "Stream.flatMap" should "return a transformed Stream when called on filled Stream" in {
+    Stream(1,2,3).flatMap(a => Stream.cons(a.toString, Stream.empty)).toList shouldBe List("1", "2", "3")
+  }
+
+  it should "return an empty Stream when called on empty Stream" in {
+    Stream.empty[Int].flatMap(a => Stream.cons(a + 1, Stream.empty)) shouldBe Stream.empty
   }
 
 }

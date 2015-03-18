@@ -3,7 +3,8 @@ package de.kaubisch.fpinscala.chapter5
 import scala.annotation.tailrec
 
 sealed trait Stream[+A] {
-  def append[B >: A](el : => B) : Stream[B] = foldRight(Stream.cons(el, Stream.empty))((a,b) => Stream.cons(a,b))
+  def flatMap[B](f: A => Stream[B]) : Stream[B] =
+    foldRight(Stream.empty : Stream[B])((a,b) => f(a) append b)
 
   def forAll(p: A => Boolean) : Boolean = foldRight(true)((a,b) => p(a) && b)
 
@@ -24,10 +25,9 @@ sealed trait Stream[+A] {
     case _ => Empty
   }
 
-  def drop(elements: Int) :Stream[A] = this match {
-    case Empty => Stream.empty
-    case c @ Cons(_,_) if elements == 0 => c
-    case Cons(h, t) => t().drop(elements - 1)
+  def drop(elements: Int) : Stream[A] = this match {
+    case Cons(_, t) if elements > 0 => t().drop(elements - 1)
+    case _ => this
   }
 
   def takeWhile(f: A => Boolean) : Stream[A] =
@@ -43,6 +43,8 @@ sealed trait Stream[+A] {
   def map[B](f: A => B) : Stream[B] = foldRight(Stream.empty[B])((a,b) => Stream.cons(f(a), b))
 
   def filter(f: A => Boolean) : Stream[A] = foldRight(Stream.empty[A])((a,b) => if (f(a)) Stream.cons(a, b) else b)
+
+  def append[B >: A](el : => Stream[B]) : Stream[B] = foldRight(el)((a,b) => Stream.cons(a,b))
 }
 
 case object Empty extends Stream[Nothing]
