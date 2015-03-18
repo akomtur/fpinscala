@@ -3,6 +3,9 @@ package de.kaubisch.fpinscala.chapter5
 import scala.annotation.tailrec
 
 sealed trait Stream[+A] {
+  def filter(f: A => Boolean) : Stream[A] =
+    foldRight(Stream.empty[A])((a,b) => if (f(a)) Stream.cons(a, b) else b)
+
   def forAll(p: A => Boolean) : Boolean = foldRight(true)((a,b) => p(a) && b)
 
   def headOption : Option[A] =

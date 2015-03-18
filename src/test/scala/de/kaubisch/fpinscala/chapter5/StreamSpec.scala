@@ -96,4 +96,16 @@ class StreamSpec extends FlatSpec with Matchers {
     Stream.empty[Int].map(_.toString) shouldBe Stream.empty
   }
 
+  "Stream.filter" should "return a new Stream with only elements where the passed function returns true" in {
+    Stream(1,2,3).filter(_ % 2 != 0).toList shouldBe List(1,3)
+  }
+
+  it should "return an empty Stream when called on empty Stream" in {
+    Stream.empty[Int].filter(_ > 0) shouldBe Stream.empty
+  }
+
+  it should "return an empty Stream when passed function doesn't match any element in Stream" in {
+    Stream(1,2,3).filter(_ == 4) shouldBe Stream.empty
+  }
+
 }
