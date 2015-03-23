@@ -137,7 +137,7 @@ class StreamSpec extends FlatSpec with Matchers {
   }
 
   "Stream.unfold" should "return a new Stream that uses the passed function to generate a Stream" in {
-    Stream.unfold(1)(a => Some(a, a+1)).take(5).toList shouldBe List(1,2,3,4,5)
+    Stream.unfold(1)(a => Some((a, a+1))).take(5).toList shouldBe List(1,2,3,4,5)
   }
 
   it should "return an empty Stream when function return None" in {
