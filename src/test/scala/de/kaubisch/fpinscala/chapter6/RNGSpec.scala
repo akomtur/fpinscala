@@ -31,7 +31,7 @@ class RNGSpec extends FlatSpec with Matchers {
   }
 
   it should "return correct double,int tuple if nextInt will return the correct values" in {
-    RNG.doubleInt(RNGWithValues(2 :: -3 :: Nil))._1 shouldBe (1.0 / Int.MaxValue, 2)
+    RNG.doubleInt(RNGWithValues(2 :: -3 :: Nil))._1 shouldBe (1.0 / Int.MaxValue, -3)
   }
 
   it should "return correct double triple if nextInt will return the correct values" in {
@@ -40,6 +40,16 @@ class RNGSpec extends FlatSpec with Matchers {
 
   it should "return correct List[Int] when calling ints" in {
     RNG.ints(3)(RNGWithValues(1 :: 2 :: 3 :: Nil))._1 shouldBe List(1,2,3)
+  }
+
+  it should "map two Rand values when calling map2" in {
+    val rng = RNGWithValues(2 :: 3 :: Nil)
+    RNG.map2(RNG.nonNegativeInt, RNG.nonNegativeEven)((a, b) => a + b)(rng)._1 shouldBe 4
+  }
+
+  it should "create a Rand element with a List of Integer when calling sequence" in {
+    val rng = RNGWithValues(1 :: 2 :: 3 :: Nil)
+    RNG.sequence(RNG.int :: RNG.int :: RNG.int :: Nil)(rng)._1 shouldBe List(1, 2, 3)
   }
 
   case class RNGWithValue(value: Int) extends RNG {
