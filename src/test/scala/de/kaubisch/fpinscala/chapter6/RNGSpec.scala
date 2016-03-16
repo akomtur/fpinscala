@@ -38,6 +38,10 @@ class RNGSpec extends FlatSpec with Matchers {
     RNG.double3(RNGWithValues(5 :: 6 :: 7 :: Nil))._1 shouldBe (4.0 / Int.MaxValue, 5.0 / Int.MaxValue, 6.0 / Int.MaxValue)
   }
 
+  it should "return correct List[Int] when calling ints" in {
+    RNG.ints(3)(RNGWithValues(1 :: 2 :: 3 :: Nil))._1 shouldBe List(1,2,3)
+  }
+
   case class RNGWithValue(value: Int) extends RNG {
     override def nextInt: (Int, RNG) = (value, this)
   }
