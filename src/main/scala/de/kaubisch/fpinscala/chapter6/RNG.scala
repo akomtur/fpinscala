@@ -53,12 +53,12 @@ object RNG {
   def doubleInt(rng: RNG): ((Double, Int), RNG) = randDoubleInt(rng)
   def randDoubleInt : Rand[(Double, Int)] = both(double, int)
 
-  def double3 : Rand[(Double, Double, Double)] = State(rng => {
-    val (d1, s1) = double(rng)
-    val (d2, s2) = double(s1)
-    val (d3, s3) = double(s2)
-    ((d1, d2, d3), s3)
-  })
+  def double3 : Rand[(Double, Double, Double)] =
+    for {
+      d1 <- double
+      d2 <- double
+      d3 <- double
+    } yield (d1, d2, d3)
 
   def ints(count: Int)(rng:RNG): (List[Int], RNG) = State.sequence(List.fill(count)(int))(rng)
 
@@ -66,11 +66,11 @@ object RNG {
 
 case class State[S, +A](run: S => (A, S)) extends AnyVal {
 
-  def apply(s: S) = run(s)
+  def apply(s: S) : (A, S) = run(s)
 
   def map[B](f: A => B) : State[S, B] = flatMap(v => State.unit(f(v)))
 
-  def map2[B, C](state: State[S,B])(f: (A, B) => C) : State[S, C] = flatMap(a => state.flatMap(b => State.unit(f(a, b))))
+  def map2[B, C](state: State[S,B])(f: (A, B) => C) : State[S, C] = flatMap(a => state map (b => f(a, b)))
 
   def flatMap[B](f: A => State[S, B]): State[S, B] = State(s => {
     val (a, s2) = run(s)
@@ -88,4 +88,32 @@ object State {
     case head :: tail => head.map2(sequence(tail))( _ :: _)
     case Nil => unit(Nil)
   }
+
+  def modify[S](f: S => S): State[S, Unit] = for {
+    s <- get
+    _ <- set(f(s))
+  } yield ()
+
+  def get[S] : State[S, S] = State(s => (s, s))
+
+  def set[S](s: S): State[S,Unit] = State(_ => ((), s))
+
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = for {
+    _ <- sequence(inputs.map(input => modify[Machine]( s => stateChanges(input, s))))
+    s <- get
+  } yield (s.candies, s.coins)
+
+  private def stateChanges(input: Input, state: Machine) : Machine = (input, state) match {
+    case (Turn, Machine(true,_,_)) => state
+    case (Turn, Machine(false, candy, _)) => state.copy(locked=true, candies=candy - 1)
+    case (Coin, Machine(false, _, _)) => state
+    case (Coin, Machine(true,_,coins)) => state.copy(locked=false, coins=coins + 1)
+    case (_, Machine(_, 0, _)) => state
+  }
 }
+
+sealed trait Input
+case object Coin extends Input
+case object Turn extends Input
+
+case class Machine(locked: Boolean, candies: Int, coins: Int);
