@@ -20,33 +20,32 @@ case class SimpleRNG(seed: Long) extends RNG {
 
 object RNG {
 
-  type Rand[+A] = RNG => (A, RNG)
 
-  val int: Rand[Int] = _.nextInt
+  type Rand[+A] = State[RNG, A]
 
-  def unit[A](a: A) : Rand[A] = rng => (a, rng)
+  val int: Rand[Int] = State(_.nextInt)
 
-  def map[A,B](s: Rand[A])(f: A => B): Rand[B] = rng => {
-    val (a, nextState) = s(rng)
-    (f(a), nextState)
-  }
+  def unit[A](a: A) : Rand[A] = State.unit(a)
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = rng => {
-    val (a, sa) = ra(rng)
-    val (b, sb) = rb(sa)
-    (f(a,b), sb)
-  }
+  def both[A, B](r1: Rand[A], r2: Rand[B]) : Rand[(A,B)] = r1.map2(r2)((_,_))
 
-  def both[A, B](r1: Rand[A], r2: Rand[B]) : Rand[(A,B)] = map2(r1, r2)((_,_))
-
-  def nonNegativeInt(rng: RNG): (Int, RNG) = {
+  def nonNegativeInt: Rand[Int] = State(rng => {
     val (v,s) = rng.nextInt
     (if(v < 0) -(v+1) else v, s)
-  }
+  })
 
-  def nonNegativeEven: Rand[Int] = map(nonNegativeInt)(i => i - i % 2)
+  def nonNegativeEven: Rand[Int] = nonNegativeInt map (i => i - i % 2)
 
-  def double(rng: RNG): (Double, RNG) = map(nonNegativeInt)(i => (if(i > 0) (i - 1) else i).toDouble / Int.MaxValue)(rng)
+  def nonNegativeLessThan(n: Int): Rand[Int] =
+    nonNegativeInt.flatMap(i => {
+      val mod = i % n
+      if((i + (n - 1) - mod) >= 0)
+        unit(mod)
+      else
+        nonNegativeLessThan(n)
+    })
+
+  def double: Rand[Double] = nonNegativeInt map (i => (if(i > 0) (i - 1) else i).toDouble / Int.MaxValue)
 
   def intDouble(rng: RNG): ((Int, Double), RNG) = randIntDouble(rng)
   def randIntDouble : Rand[(Int, Double)] = both(int, double)
@@ -54,17 +53,39 @@ object RNG {
   def doubleInt(rng: RNG): ((Double, Int), RNG) = randDoubleInt(rng)
   def randDoubleInt : Rand[(Double, Int)] = both(double, int)
 
-  def double3(rng: RNG) : ((Double, Double, Double), RNG) = {
+  def double3 : Rand[(Double, Double, Double)] = State(rng => {
     val (d1, s1) = double(rng)
     val (d2, s2) = double(s1)
     val (d3, s3) = double(s2)
     ((d1, d2, d3), s3)
-  }
+  })
 
-  def ints(count: Int)(rng:RNG): (List[Int], RNG) = sequence(List.fill(count)(int))(rng)
+  def ints(count: Int)(rng:RNG): (List[Int], RNG) = State.sequence(List.fill(count)(int))(rng)
 
-  def sequence[A](xs : List[Rand[A]]) : Rand[List[A]] = xs match {
-    case head :: tail => map2(head, sequence(tail))(_ :: _)
+}
+
+case class State[S, +A](run: S => (A, S)) extends AnyVal {
+
+  def apply(s: S) = run(s)
+
+  def map[B](f: A => B) : State[S, B] = flatMap(v => State.unit(f(v)))
+
+  def map2[B, C](state: State[S,B])(f: (A, B) => C) : State[S, C] = flatMap(a => state.flatMap(b => State.unit(f(a, b))))
+
+  def flatMap[B](f: A => State[S, B]): State[S, B] = State(s => {
+    val (a, s2) = run(s)
+    val (b, s3) = f(a)(s2)
+    (b, s3)
+  })
+}
+
+object State {
+  type Rand[A] = State[RNG, A]
+
+  def unit[S, A](a: A) : State[S, A] = State(s => (a, s))
+
+  def sequence[S, A](xs: List[State[S, A]]) : State[S, List[A]] = xs match {
+    case head :: tail => head.map2(sequence(tail))( _ :: _)
     case Nil => unit(Nil)
   }
 }

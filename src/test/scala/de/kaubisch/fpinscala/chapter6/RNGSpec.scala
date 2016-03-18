@@ -44,12 +44,16 @@ class RNGSpec extends FlatSpec with Matchers {
 
   it should "map two Rand values when calling map2" in {
     val rng = RNGWithValues(2 :: 3 :: Nil)
-    RNG.map2(RNG.nonNegativeInt, RNG.nonNegativeEven)((a, b) => a + b)(rng)._1 shouldBe 4
+    RNG.nonNegativeInt.map2(RNG.nonNegativeEven)((a, b) => a + b)(rng)._1 shouldBe 4
   }
 
   it should "create a Rand element with a List of Integer when calling sequence" in {
     val rng = RNGWithValues(1 :: 2 :: 3 :: Nil)
-    RNG.sequence(RNG.int :: RNG.int :: RNG.int :: Nil)(rng)._1 shouldBe List(1, 2, 3)
+    State.sequence(RNG.int :: RNG.int :: RNG.int :: Nil)(rng)._1 shouldBe List(1, 2, 3)
+  }
+
+  it should "create a number between 0 and 100 (exclusive) if generating Int.MaxValue" in {
+    RNG.nonNegativeLessThan(100)(RNGWithValues(Int.MaxValue :: 101 :: Nil))._1 shouldBe 1
   }
 
   case class RNGWithValue(value: Int) extends RNG {
